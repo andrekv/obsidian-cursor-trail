@@ -8,11 +8,14 @@ const DEFAULT_SETTINGS = {
 
 class BoldCursorTrailPlugin extends obsidian.Plugin {
     async onload() {
-        console.log("BOLD CURSOR PLUGIN: Loading with Color Accuracy...");
+        console.log("BOLD CURSOR PLUGIN: Loading with Optimizations...");
         await this.loadSettings();
         
         this.addSettingTab(new BoldCursorSettingTab(this.app, this));
         
+        this._lastCoords = null;
+        this._debouncedUpdate = this.debounce(() => this.updateActiveEditor(), 16);
+
         this.styleTag = document.createElement('style');
         this.styleTag.id = 'bold-cursor-plugin-styles';
         document.head.appendChild(this.styleTag);
@@ -28,18 +31,38 @@ class BoldCursorTrailPlugin extends obsidian.Plugin {
         }));
 
         this.registerDomEvent(document, 'selectionchange', () => {
-            this.updateActiveEditor();
+            const activeView = this.app.workspace.getActiveViewOfType(obsidian.MarkdownView);
+            if (activeView) {
+                this._debouncedUpdate();
+            } else {
+                this.cursorEl.style.display = 'none';
+            }
         });
 
         this.scrollHandler = () => {
-            this.updateActiveEditor();
+            this._debouncedUpdate();
         };
         window.addEventListener('scroll', this.scrollHandler, true);
         
-        // Update colors when theme changes
         this.registerEvent(this.app.workspace.on('css-change', () => {
             this.updateStyles();
         }));
+    }
+
+    onunload() {
+        console.log("BOLD CURSOR PLUGIN: Unloading...");
+        window.removeEventListener('scroll', this.scrollHandler, true);
+        if (this.styleTag) this.styleTag.remove();
+        if (this.cursorEl) this.cursorEl.remove();
+        document.querySelectorAll('.bold-cursor-trail').forEach(el => el.remove());
+    }
+
+    debounce(fn, ms) {
+        let timer;
+        return (...args) => {
+            clearTimeout(timer);
+            timer = setTimeout(() => fn(...args), ms);
+        };
     }
 
     async loadSettings() {
@@ -70,13 +93,15 @@ class BoldCursorTrailPlugin extends obsidian.Plugin {
                 z-index: 99999 !important;
                 border-radius: 1px;
                 display: none;
+                transition: opacity 0.2s ease-out;
             }
             .bold-cursor-main {
                 width: 8px !important;
-                opacity: 0.7 !important; /* Transparency to see text */
+                opacity: 0.7 !important;
             }
             .bold-cursor-trail {
                 opacity: 0.4;
+                pointer-events: none;
             }
             .markdown-source-view.mod-cm6 .cm-cursor {
                 opacity: 0 !important;
@@ -98,51 +123,44 @@ class BoldCursorTrailPlugin extends obsidian.Plugin {
         }
 
         const coords = cm.coordsAtPos(sel.from);
-        if (coords) {
-            this.createSmear(this._lastCoords, coords);
-            this._lastCoords = coords;
-            this.drawCursor(coords);
-        } else {
-            this.cursorEl.style.display = 'none';
-        }
-    }
+        if (!coords) return;
 
-    drawCursor(coords) {
         this.cursorEl.style.display = 'block';
         this.cursorEl.style.left = coords.left + 'px';
         this.cursorEl.style.top = coords.top + 'px';
         this.cursorEl.style.height = (coords.bottom - coords.top) + 'px';
+
+        if (this._lastCoords) {
+            this.createSmear(this._lastCoords, coords);
+        }
+        this._lastCoords = coords;
     }
 
     createSmear(from, to) {
-        if (!from) return;
-        if (Math.abs(from.top - to.top) > 4) return;
-
-        const left = Math.min(from.left, to.left);
-        const width = Math.abs(to.left - from.left);
-        if (width < 2) return;
+        if (!from || !to) return;
+        if (Math.abs(from.top - to.top) > 8) return;
+        if (from.left === to.left && from.top === to.top) return;
+        
+        if (document.querySelectorAll('.bold-cursor-trail').length > 15) return;
 
         const smear = document.createElement('div');
         smear.className = 'bold-cursor-element bold-cursor-trail';
+        
+        const left = Math.min(from.left, to.left);
+        const width = Math.abs(from.left - to.left) + 8;
+        
         smear.style.display = 'block';
         smear.style.left = left + 'px';
-        smear.style.top = to.top + 'px';
-        smear.style.height = (to.bottom - to.top) + 'px';
+        smear.style.top = from.top + 'px';
         smear.style.width = width + 'px';
+        smear.style.height = (from.bottom - from.top) + 'px';
+
         document.body.appendChild(smear);
-
-        requestAnimationFrame(() => {
-            smear.style.opacity = "0";
-            smear.style.transition = "opacity 0.2s ease-out";
+        
+        setTimeout(() => {
+            smear.style.opacity = '0';
             setTimeout(() => smear.remove(), 200);
-        });
-    }
-
-    onunload() {
-        if (this.styleTag) this.styleTag.remove();
-        if (this.cursorEl) this.cursorEl.remove();
-        document.querySelectorAll('.bold-cursor-trail').forEach(el => el.remove());
-        window.removeEventListener('scroll', this.scrollHandler, true);
+        }, 50);
     }
 }
 
@@ -159,7 +177,7 @@ class BoldCursorSettingTab extends obsidian.PluginSettingTab {
 
         new obsidian.Setting(containerEl)
             .setName('Light Mode Color')
-            .setDesc('Pick the cursor color for Light Mode')
+            .setDesc('Color of the cursor in light theme')
             .addColorPicker(color => color
                 .setValue(this.plugin.settings.lightColor)
                 .onChange(async (value) => {
@@ -169,7 +187,7 @@ class BoldCursorSettingTab extends obsidian.PluginSettingTab {
 
         new obsidian.Setting(containerEl)
             .setName('Dark Mode Color')
-            .setDesc('Pick the cursor color for Dark Mode')
+            .setDesc('Color of the cursor in dark theme')
             .addColorPicker(color => color
                 .setValue(this.plugin.settings.darkColor)
                 .onChange(async (value) => {
