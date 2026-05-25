@@ -15,7 +15,7 @@
     "aesthetics"
   ],
   "author": "andrekv",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "devDependencies": {
     "@types/node": "^16.11.21",
     "@typescript-eslint/eslint-plugin": "^5.10.1",
