@@ -4,7 +4,5 @@ node_modules/
 data.json
 .obsidian/
 dist/
-main.js
-# Note: Usually main.js is kept in the repo for Obsidian plugins to work via BRAT, 
-# but if you are doing a source-only repo you'd ignore it. 
-# For now, we'll keep it so it's ready to use.
+# main.js is included so the plugin is ready to use via BRAT
+
