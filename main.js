@@ -3,12 +3,14 @@ var obsidian = require("obsidian");
 
 const DEFAULT_SETTINGS = {
     lightColor: '#00ff00',
-    darkColor: '#00ff00'
+    darkColor: '#00ff00',
+    cursorWidth: 3,
+    cursorOpacity: 0.7
 }
 
 class BoldCursorTrailPlugin extends obsidian.Plugin {
     async onload() {
-        console.log("BOLD CURSOR PLUGIN: Loading with Optimizations...");
+        console.log("BOLD CURSOR PLUGIN: Loading with Precision Fix...");
         await this.loadSettings();
         
         this.addSettingTab(new BoldCursorSettingTab(this.app, this));
@@ -96,11 +98,11 @@ class BoldCursorTrailPlugin extends obsidian.Plugin {
                 transition: opacity 0.2s ease-out;
             }
             .bold-cursor-main {
-                width: 8px !important;
-                opacity: 0.7 !important;
+                width: ${this.settings.cursorWidth}px !important;
+                opacity: ${this.settings.cursorOpacity} !important;
             }
             .bold-cursor-trail {
-                opacity: 0.4;
+                opacity: ${this.settings.cursorOpacity * 0.6};
                 pointer-events: none;
             }
             .markdown-source-view.mod-cm6 .cm-cursor {
@@ -147,7 +149,7 @@ class BoldCursorTrailPlugin extends obsidian.Plugin {
         smear.className = 'bold-cursor-element bold-cursor-trail';
         
         const left = Math.min(from.left, to.left);
-        const width = Math.abs(from.left - to.left) + 8;
+        const width = Math.abs(from.left - to.left) + this.settings.cursorWidth;
         
         smear.style.display = 'block';
         smear.style.left = left + 'px';
@@ -174,6 +176,30 @@ class BoldCursorSettingTab extends obsidian.PluginSettingTab {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.createEl('h2', { text: 'Bold Cursor & Trail Settings' });
+
+        new obsidian.Setting(containerEl)
+            .setName('Cursor Width')
+            .setDesc('Set the width of the cursor (px). Use smaller values for more precision.')
+            .addSlider(slider => slider
+                .setLimits(1, 15, 1)
+                .setValue(this.plugin.settings.cursorWidth)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.cursorWidth = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new obsidian.Setting(containerEl)
+            .setName('Cursor Opacity')
+            .setDesc('Set the transparency level (0.1 to 1.0)')
+            .addSlider(slider => slider
+                .setLimits(0.1, 1, 0.1)
+                .setValue(this.plugin.settings.cursorOpacity)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.cursorOpacity = value;
+                    await this.plugin.saveSettings();
+                }));
 
         new obsidian.Setting(containerEl)
             .setName('Light Mode Color')
