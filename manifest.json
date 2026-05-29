@@ -1,9 +1,9 @@
 {
 	"id": "obsidian-cursor-trail",
-	"name": "Obsidian Cursor Trail",
-	"version": "1.1.0",
+	"name": "Bold Cursor & Trail",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
-	"description": "Provides a high-visibility block cursor and a Kitty-like movement trail for the Obsidian editor.",
+	"description": "Adds a highly visible, customizable bold block cursor and movement trail to the Obsidian editor.",
 	"author": "andrekv",
 	"authorUrl": "https://github.com/andrekv",
 	"isDesktopOnly": true
