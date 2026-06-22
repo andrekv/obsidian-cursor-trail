@@ -1,10 +1,10 @@
 {
 	"id": "obsidian-cursor-trail",
 	"name": "Bold Cursor & Trail",
-	"version": "1.0.0",
+	"version": "1.0.2",
 	"minAppVersion": "0.15.0",
-	"description": "Bold block cursor and Kitty-like movement trail.",
-	"author": "Gemini CLI",
-	"authorUrl": "https://gemini.google.com",
+	"description": "Adds a highly visible, customizable bold block cursor and movement trail to the Obsidian editor.",
+	"author": "andrekv",
+	"authorUrl": "https://github.com/andrekv",
 	"isDesktopOnly": true
 }

@@ -31,5 +31,26 @@ npm install
 npm run build
 ```
 
+## Releasing New Versions
+
+When you make substantial changes to the codebase and want to publish a new version/update:
+
+1. Update the `"version"` field in `manifest.json` (e.g. bump to `1.0.2`).
+2. Commit the changes and the updated manifest:
+   ```bash
+   git add manifest.json main.js README.md
+   git commit -m "chore: bump version to 1.0.2"
+   ```
+3. Tag the commit with the new version name:
+   ```bash
+   git tag v1.0.2
+   ```
+4. Push both the code and the new tag to GitHub:
+   ```bash
+   git push origin main --tags
+   ```
+
+*Note: If you are using BRAT, beta-testers will automatically download the new `main.js` from the `main` branch, but a tag-based release is recommended for clean versioning.*
+
 ## License
 AGPL-3.0
